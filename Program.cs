@@ -46,16 +46,22 @@ app.MapPost("/login", async (string? returnUrl, HttpContext context) =>
     User? user = users.FirstOrDefault(p => p.Email == email && p.Password == password);
     // если пользователь не найден, отправляем статусный код 401
     if (user is null)
+    
+      
         return Results.Content($"User: {email}, {password}\nNot Found");//.Unauthorized();
+    
+   
+        var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email) };
+        // создаем объект ClaimsIdentity
+        ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+
+        // установка аутентификационных куки
+        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));//аутентификационные куки
+        return Results.Redirect(returnUrl ?? "/");//перенаправляем аутентификацированного пользователя обратно на адрес, с которого его перебросило на форму логина
+    
 
 
-    var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email) };
-    // создаем объект ClaimsIdentity
-    ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
-
-    // установка аутентификационных куки
-    await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));//аутентификационные куки
-    return Results.Redirect(returnUrl ?? "/");//перенаправляем аутентификацированного пользователя обратно на адрес, с которого его перебросило на форму логина
+    
 
 });
 
